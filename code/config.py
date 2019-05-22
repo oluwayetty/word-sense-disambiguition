@@ -1,0 +1,7 @@
+# XML_FILEPATH = 'data/eurosense.v1.0.high-coverage.xml'
+XML_FILEPATH = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data_first/test.xml'
+DATA_FOLDER = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data'
+LEMMAIDS_DATA = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data/combined.csv'
+FINAL_DATA = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data/final_data.csv'
+COMBINED_TAB = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/resources/combined.tab'
+EMBEDDINGS = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data/embeddings.vec'
