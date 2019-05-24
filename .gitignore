@@ -1,5 +1,4 @@
 /data
 .DS_Store
 /notebooks
-/data_first
-/notebooks
+resources/embeddings_sample.vec
