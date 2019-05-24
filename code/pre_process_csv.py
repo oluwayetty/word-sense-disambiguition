@@ -1,3 +1,4 @@
+import csv
 import string
 import pandas as pd
 from config import XML_FILEPATH, DATA_FOLDER
@@ -70,11 +71,21 @@ def replace_anchors_with_lemmas(lemma_ids, anchors, sentences):
       all_sentences.append([" ".join(map(lambda x:lemmas.get(x, x), sentence.split()))])
   return all_sentences
 
+
 def replaceMultiple(main, replaces, new):
     for elem in replaces :
         if elem in main :
             main = main.replace(elem, new)
     return main
+
+def write_per_row(filename, list_, header_name):
+    with open(filename, mode='w') as csv_file:
+        fieldnames = [header_name]
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for element in list_:
+            element = element.replace('.', '').replace('...', '')
+            writer.writerow({header_name: element})
 
 
 def main():
@@ -89,11 +100,8 @@ def main():
     training = replace_anchors_with_lemmas(all_lemmaIDs,all_anchors,all_english_texts)
     flat_list = [item for sublist in training for item in sublist]
     training_data = [replaceMultiple(i, cst_punct, '') for i in flat_list]
-    with open(DATA_FOLDER+ '/training.txt', 'w') as f:
-        f.write('sentence' + "\n")
-        for item in training_data:
-            item = item.replace('.', '').replace('...', '')
-            f.write("%s\n" % item)
+    write_per_row(DATA_FOLDER+ '/training.csv', training_data, 'sentence')
+
 
 if __name__ == '__main__':
     main()
