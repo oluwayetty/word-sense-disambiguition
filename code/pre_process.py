@@ -20,6 +20,7 @@ def parse_xml(filepath):
 
     xml_content = ET.iterparse(filepath, events=('end',), tag='sentence')
     print("Parsing xml file.......")
+
     for event, element in xml_content:
 
         anchor, lemma, babelnetID = [], [], []
@@ -33,7 +34,7 @@ def parse_xml(filepath):
                     if elem.tag == 'annotations':
                         for annotation in elem.iter():
                             if annotation.tag == 'annotation' and annotation.attrib['lang']  == 'en':
-                                lemma.append(annotation.attrib['lemma'])
+                                lemma.append("_".join(annotation.attrib['lemma'].split(' ')))
                                 anchor.append(annotation.attrib['anchor'])
                                 babelnetID.append(annotation.text.strip())
             babelnetIDs.append(babelnetID)
@@ -49,6 +50,17 @@ def parse_xml(filepath):
     print("Parsing all done.......")
     return english_texts, babelnetIDs, lemma_lists, anchor_lists
 
+def get_unwanted_IDs(babelnetIDs):
+    flat_list = [item for sublist in babelnetIDs for item in sublist]
+    set_flat_list = list(set(flat_list))
+    mapping_IDS =[]
+
+    with open('resources/bn2wn_mapping.txt', 'r') as f:
+        lines = f.readlines()
+        mapping_IDS = [line.split('\t')[0] for line in lines]
+    import ipdb; ipdb.set_trace()
+    return mapping_IDS
+
 def join_lemma_to_IDs(lemmas, babelnetIDs):
     """
     This joins each lemma to its corresponding babelnetID
@@ -57,7 +69,7 @@ def join_lemma_to_IDs(lemmas, babelnetIDs):
     lemma_IDs = []
     print("Combining lemmas to their babelnetIDs")
     for x in range(0, len(lemmas)):
-        lemma_ids = [m.replace(' ', '') + '_' + str(n) for m, n in zip(lemmas[x], babelnetIDs[x])]
+        lemma_ids = [m.lower() + '_' + str(n) for m, n in zip(lemmas[x], babelnetIDs[x])]
         lemma_IDs.append(lemma_ids)
     return lemma_IDs
 
@@ -69,6 +81,18 @@ def replace_anchors_with_lemmas(lemma_ids, anchors, sentences):
       lemmas = dict(zip(anchors[i], lemma_ids[i]))
       all_sentences.append([" ".join(map(lambda x:lemmas.get(x, x), sentence.split()))])
   return all_sentences
+
+def remove_context_words(filepath):
+    with open(filepath, "r") as f:
+        lines = f.readlines()
+    with open(filepath, "w") as f:
+        lines_embeddings = [i for i in lines if '_bn:' in i]
+        embeddings_length = str(len(lines_embeddings))
+        embeddings_dimsize = str(len(lines_embeddings[1].split(' ')) - 1)
+        f.write('{} {}\n'.format(embeddings_length, embeddings_dimsize))
+        for line in lines_embeddings:
+            f.write(line)
+
 
 def replaceMultiple(main, replaces, new):
     for elem in replaces :
@@ -94,6 +118,7 @@ def main():
         for item in training_data:
             item = item.replace('.', '').replace('...', '')
             f.write("%s\n" % item)
+
 
 if __name__ == '__main__':
     main()

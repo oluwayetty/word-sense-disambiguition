@@ -1,5 +1,5 @@
 import pandas as pd
-from config import DATA_FOLDER, GZ_DATA
+from config import GZ_DATA, EMBEDDINGS
 import gzip
 
 def return_data_for_cbow(filepath):
@@ -38,6 +38,3 @@ def return_gz_format(filepath):
     with gzip.open(GZ_DATA, "wb") as f:
         f.write(bindata)
     return GZ_DATA
-
-def remove_context_words(filepath):
-    return ""
