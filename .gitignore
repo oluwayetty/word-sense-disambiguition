@@ -2,3 +2,4 @@
 .DS_Store
 /notebooks
 resources/embeddings_sample.vec
+resources/.DS_Store
