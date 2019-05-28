@@ -1,5 +1,8 @@
-# XML_FILEPATH = 'data/eurosense.v1.0.high-coverage.xml'
-XML_FILEPATH = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data/test.xml'
+'''
+TO STORE FOLDERS AND FILES TO READ DATA
+'''
+
+XML_FILEPATH = 'data/eurosense.v1.0.high-coverage.xml'
 DATA_FOLDER = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data'
 DATA_FILE = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data/training.txt'
 GZ_DATA = '/Users/oluwayetty1/Desktop/School/1-2/NLP/public_homework2/data/training.txt.gz'

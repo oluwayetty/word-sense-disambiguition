@@ -3,10 +3,10 @@ from config import GZ_DATA, EMBEDDINGS
 import gzip
 
 def return_data_for_cbow(filepath):
-    data = pd.read_csv(filepath)
+    data = pd.read_csv(filepath, sep='\n')
 
     # drop duplicated lines
-    data = data.drop_duplicates(['sentence'], keep='last')
+    # data = data.drop_duplicates(['sentence'], keep='last')
 
     # drop any empty row
     data = data.dropna()

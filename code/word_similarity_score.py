@@ -4,9 +4,9 @@ from gensim.models import KeyedVectors
 from scipy.spatial.distance import cosine
 from scipy.stats import spearmanr
 
-# '''
-# VARIABLES DECLARATION
-# '''
+'''
+VARIABLES DECLARATION
+'''
 df = pd.read_csv(COMBINED_TAB, sep='\t')
 df.columns = ['word_a', 'word_b', 'gold']
 
@@ -17,13 +17,9 @@ df['word_b'] = df.word_b.str.lower()
 loaded_model = KeyedVectors.load_word2vec_format(EMBEDDINGS, binary=False)
 words_in_vocab = loaded_model.wv.vocab.keys()
 
-
 lem_list = [i for i in words_in_vocab if "bn:" in i]
-k = [i.split('_bn:') for i in lem_list]
-lem_ = dict([i for i in k if len(i) == 2])
+lem_ = dict([i.split('_bn:') for i in lem_list])
 
-# when all is 2
-# lem_ = dict([i.split('_bn:') for i in lem_list])
 normal = {}
 exist_as_lemma = {}
 def get_word_embeddings(a):

@@ -1,5 +1,7 @@
 import string
 import pandas as pd
+from nltk.corpus import stopwords
+stoplist = stopwords.words('english')
 from config import XML_FILEPATH, DATA_FOLDER
 from lxml import etree as ET
 
@@ -50,7 +52,7 @@ def parse_xml(filepath):
     print("Parsing all done.......")
     return english_texts, babelnetIDs, lemma_lists, anchor_lists
 
-def get_unwanted_IDs(babelnetIDs):
+def get_wanted_IDs(babelnetIDs):
     flat_list = [item for sublist in babelnetIDs for item in sublist]
     set_flat_list = list(set(flat_list))
     mapping_IDS =[]
@@ -58,7 +60,6 @@ def get_unwanted_IDs(babelnetIDs):
     with open('resources/bn2wn_mapping.txt', 'r') as f:
         lines = f.readlines()
         mapping_IDS = [line.split('\t')[0] for line in lines]
-    import ipdb; ipdb.set_trace()
     return mapping_IDS
 
 def join_lemma_to_IDs(lemmas, babelnetIDs):
@@ -73,6 +74,26 @@ def join_lemma_to_IDs(lemmas, babelnetIDs):
         lemma_IDs.append(lemma_ids)
     return lemma_IDs
 
+def remove_unwanted_lemmas(check, IDs):
+    print(check.split("_bn"))
+    word, id_ = check.split("_bn")
+    id_ = 'bn' + id_
+    mapping_IDS = get_wanted_IDs(IDs)
+    if id_ in mapping_IDS:
+        check
+    else:
+        check = check.replace(id_, '')
+        check = check[:-1]
+    return check
+
+
+def remove_id_from_unwanted(array,IDs):
+    all_lemmas = []
+    for element in array:
+        final_lemmas = [remove_unwanted_lemmas(i, IDs) for i in element]
+        all_lemmas.append(final_lemmas)
+    return all_lemmas
+
 
 def replace_anchors_with_lemmas(lemma_ids, anchors, sentences):
   all_sentences = []
@@ -81,6 +102,7 @@ def replace_anchors_with_lemmas(lemma_ids, anchors, sentences):
       lemmas = dict(zip(anchors[i], lemma_ids[i]))
       all_sentences.append([" ".join(map(lambda x:lemmas.get(x, x), sentence.split()))])
   return all_sentences
+
 
 def remove_context_words(filepath):
     with open(filepath, "r") as f:
@@ -100,6 +122,18 @@ def replaceMultiple(main, replaces, new):
             main = main.replace(elem, new)
     return main
 
+def remove_stop_words(data,outfile):
+    print("Removing stop words")
+    all_clean = []
+    for each in data:
+        clean = [word for word in each.split() if word not in stoplist]
+        clean = " ".join(clean)
+        all_clean.append(clean)
+    with open(outfile, 'w') as f:
+        f.write('sentence'+'\n')
+        for item in all_clean:
+            f.write("%s\n" % item)
+
 
 def main():
     cst_punct = list(string.punctuation.replace(':', '').replace('_', ''))
@@ -110,14 +144,11 @@ def main():
     length = len(all_english_texts)
     assert all(len(lst) == length for lst in [all_babelnetIDs, all_lemmas, all_anchors])
 
+    all_lemmaIDs = remove_id_from_unwanted(all_lemmaIDs,all_babelnetIDs)
     training = replace_anchors_with_lemmas(all_lemmaIDs,all_anchors,all_english_texts)
     flat_list = [item for sublist in training for item in sublist]
     training_data = [replaceMultiple(i, cst_punct, '') for i in flat_list]
-    with open(DATA_FOLDER+ '/training.txt', 'w') as f:
-        f.write('sentence' + "\n")
-        for item in training_data:
-            item = item.replace('.', '').replace('...', '')
-            f.write("%s\n" % item)
+    remove_stop_words(training_data, DATA_FOLDER+ '/training.txt')
 
 
 if __name__ == '__main__':
