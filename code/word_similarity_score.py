@@ -10,6 +10,10 @@ from scipy.stats import spearmanr
 df = pd.read_csv(COMBINED_TAB, sep='\t')
 df.columns = ['word_a', 'word_b', 'gold']
 
+# convert words from combined.tab to lower case
+df['word_a'] = df.word_a.str.lower()
+df['word_b'] = df.word_b.str.lower()
+
 loaded_model = KeyedVectors.load_word2vec_format(EMBEDDINGS, binary=False)
 words_in_vocab = loaded_model.wv.vocab.keys()
 
@@ -20,7 +24,6 @@ lem_ = dict([i for i in k if len(i) == 2])
 
 # when all is 2
 # lem_ = dict([i.split('_bn:') for i in lem_list])
-words_in_vocab = list(words_in_vocab)
 normal = {}
 exist_as_lemma = {}
 def get_word_embeddings(a):
