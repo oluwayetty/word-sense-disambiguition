@@ -1,7 +1,6 @@
 import string
 import pandas as pd
 from nltk.corpus import stopwords
-stoplist = stopwords.words('english')
 from config import XML_FILEPATH, DATA_FOLDER
 from lxml import etree as ET
 
@@ -125,6 +124,7 @@ def replaceMultiple(main, replaces, new):
 def remove_stop_words(data,outfile):
     print("Removing stop words")
     all_clean = []
+    stoplist = stopwords.words('english')
     for each in data:
         clean = [word for word in each.split() if word not in stoplist]
         clean = " ".join(clean)
