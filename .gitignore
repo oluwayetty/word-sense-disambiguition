@@ -3,3 +3,5 @@
 /notebooks
 resources/embeddings_sample.vec
 resources/.DS_Store
+word2vec-visualization
+code/__pycache__

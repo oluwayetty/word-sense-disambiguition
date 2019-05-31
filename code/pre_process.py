@@ -3,6 +3,15 @@ import pandas as pd
 from nltk.corpus import stopwords
 from config import XML_FILEPATH, DATA_FOLDER
 from lxml import etree as ET
+from argparse import ArgumentParser
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--nltk", default="false",
+    help="If true, it runs the stopwords function, which removes stopwords from our data.\
+          If false - it does not remove stop words function")
+    return parser.parse_args()
 
 class Error(Exception):
     """Base class for other exceptions"""
@@ -14,8 +23,9 @@ class EmptyTagError(Error):
 
 def parse_xml(filepath):
     """
-    Takes the xml filepath and returns four multidimensional
-    of anchors, lemmas, sentences, & babelnetID
+    :filepath - takes an xml filepath of our corpus
+    :returns four multidimensional arrays of anchors,
+    lemmas, sentences, & babelnetID found in the file.
     """
     english_texts, anchor_lists, lemma_lists, babelnetIDs = [], [], [], []
 
@@ -52,6 +62,10 @@ def parse_xml(filepath):
     return english_texts, babelnetIDs, lemma_lists, anchor_lists
 
 def get_wanted_IDs(babelnetIDs):
+    """
+    :babelnetIDs - A list of all babelnetIDs from our Corpus
+    :returns - A list that contains ONLY the babelnetIDs that are found in wordnet based on bn2wn_mapping.txt
+    """
     flat_list = [item for sublist in babelnetIDs for item in sublist]
     set_flat_list = list(set(flat_list))
     mapping_IDS =[]
@@ -63,8 +77,10 @@ def get_wanted_IDs(babelnetIDs):
 
 def join_lemma_to_IDs(lemmas, babelnetIDs):
     """
+    :lemmas - arrays of lemmas e.g [ 'area', 'president']
+    :babelnetIDs arrays of correspondent babelnetIDs to the lemmas
     This joins each lemma to its corresponding babelnetID
-    e.g "cathedral" + "bn:00016759n" ==> cathedral_bn:00016759n
+    :returns their concatenation e.g "cathedral" + "bn:00016759n" ==> cathedral_bn:00016759n
     """
     lemma_IDs = []
     print("Combining lemmas to their babelnetIDs")
@@ -74,7 +90,11 @@ def join_lemma_to_IDs(lemmas, babelnetIDs):
     return lemma_IDs
 
 def remove_unwanted_lemmas(check, IDs):
-    print(check.split("_bn"))
+    """
+    :check - lemma_ID e.g area_bn:03404559n and check if its synsetID i.e bn:03404559n
+    is found in our wanted ID's list.
+    :returns the lemma_ID itself if found, else returns just the lemma e.g area
+    """
     word, id_ = check.split("_bn")
     id_ = 'bn' + id_
     mapping_IDS = get_wanted_IDs(IDs)
@@ -87,6 +107,9 @@ def remove_unwanted_lemmas(check, IDs):
 
 
 def remove_id_from_unwanted(array,IDs):
+    """
+    Uses the function(remove_unwanted_lemmas) above to map across our entire data
+    """
     all_lemmas = []
     for element in array:
         final_lemmas = [remove_unwanted_lemmas(i, IDs) for i in element]
@@ -95,15 +118,24 @@ def remove_id_from_unwanted(array,IDs):
 
 
 def replace_anchors_with_lemmas(lemma_ids, anchors, sentences):
-  all_sentences = []
-  print("Replacing anchors with lemma_IDs")
-  for i, sentence in enumerate(sentences):
+    """
+    Goes through our english text, find the position of every anchor that is found in the sentence.
+    if the anchor is found, replace each equivalent anchor with it's equivalent lemma_id
+    e.g area in a sentence will become area_:bn:00016759n
+    """
+    all_sentences = []
+    print("Replacing anchors with lemma_IDs")
+    for i, sentence in enumerate(sentences):
       lemmas = dict(zip(anchors[i], lemma_ids[i]))
       all_sentences.append([" ".join(map(lambda x:lemmas.get(x, x), sentence.split()))])
-  return all_sentences
+    return all_sentences
 
 
 def remove_context_words(filepath):
+    """
+    The task is to return just the sense embeddings, this function removes\
+    all context words leaving only the sense embeddings in the vec file.
+    """
     with open(filepath, "r") as f:
         lines = f.readlines()
     with open(filepath, "w") as f:
@@ -116,29 +148,35 @@ def remove_context_words(filepath):
 
 
 def replaceMultiple(main, replaces, new):
+    """
+    This split each sentence into an array of each element,
+    which helps to prepare our data for gensim Word2Vec expected input
+    """
     for elem in replaces :
         if elem in main :
             main = main.replace(elem, new)
     return main
 
-def remove_stop_words(data,outfile):
-    print("Removing stop words")
+def remove_stop_words(data):
+    print("Removing stop words using nltk toolkit")
     all_clean = []
     stoplist = stopwords.words('english')
     for each in data:
         clean = [word for word in each.split() if word not in stoplist]
         clean = " ".join(clean)
         all_clean.append(clean)
-    with open(outfile, 'w') as f:
-        f.write('sentence'+'\n')
-        for item in all_clean:
-            f.write("%s\n" % item)
+    return all_clean
 
+def write_data_to_file(data):
+    with open(DATA_FOLDER+ '/training.txt', 'w') as f:
+        f.write('sentence'+'\n')
+        for item in data:
+            f.write("%s\n" % item)
 
 def main():
     cst_punct = list(string.punctuation.replace(':', '').replace('_', ''))
 
-    all_english_texts, all_babelnetIDs, all_lemmas, all_anchors = parse_xml(XML_FILEPATH)
+    all_english_texts, all_babelnetIDs, all_lemmas, all_anchors = parse_xml('data/test.xml')
     all_lemmaIDs = join_lemma_to_IDs(all_lemmas,all_babelnetIDs)
 
     length = len(all_english_texts)
@@ -148,7 +186,12 @@ def main():
     training = replace_anchors_with_lemmas(all_lemmaIDs,all_anchors,all_english_texts)
     flat_list = [item for sublist in training for item in sublist]
     training_data = [replaceMultiple(i, cst_punct, '') for i in flat_list]
-    remove_stop_words(training_data, DATA_FOLDER+ '/training.txt')
+
+    if parse_args().nltk == 'true':
+        all_clean = remove_stop_words(training_data)
+        write_data_to_file(all_clean)
+    else:
+        write_data_to_file(training_data)
 
 
 if __name__ == '__main__':
