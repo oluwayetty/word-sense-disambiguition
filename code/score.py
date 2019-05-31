@@ -23,8 +23,8 @@ def setup_dataframe(embeddings_path, gold_data_path):
        embeddings_list.extend([(key, list(model.wv.word_vec(key)))])
 
     embeddings_dict = build_lemma(embeddings_list)
-    lemmas = [rep.split('_bn')[0] for rep in embeddings_dict.keys()]
-    babel_id = ["_bn" + rep.split('_bn')[1] for rep in embeddings_dict.keys()]
+    lemmas = [sense.split('_bn')[0] for sense in embeddings_dict.keys()]
+    babel_id = ["_bn" + sense.split('_bn')[1] for sense in embeddings_dict.keys()]
 
 
     df['a_vec'] = df.word_a.map(lambda x: pair_words(x, lemmas,babel_id, embeddings_dict))
