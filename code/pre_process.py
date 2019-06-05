@@ -1,10 +1,12 @@
 import string
 import pandas as pd
+import os
+import re
 from nltk.corpus import stopwords
 stoplist = stopwords.words('english')
-from config import XML_FILEPATH, DATA_FOLDER
 from lxml import etree as ET
 from argparse import ArgumentParser
+from config import EUROSENSE_XML_FILEPATH, DATA_FOLDER, TRAINOMATIC_FOLDERPATH, MAPPING
 
 
 def parse_args():
@@ -12,6 +14,9 @@ def parse_args():
     parser.add_argument("--nltk", default="false",
     help="If true, it runs the stopwords function, which removes stopwords from our data.\
           If false - it does not remove stop words function")
+    parser.add_argument("--data", default="eurosense",
+    help="If eurosense, it runs the parse functions for eurosense corpus,\
+          If otherwise - it assumes the data is trainomatic")
     return parser.parse_args()
 
 class Error(Exception):
@@ -22,7 +27,7 @@ class EmptyTagError(Error):
     """Raised when the text lang tag is empty"""
     print("Empty tag detected")
 
-def parse_xml(filepath):
+def parse_eurosense_xml(filepath):
     """
     :filepath - takes an xml filepath of our corpus
     :returns four multidimensional arrays of anchors,
@@ -62,6 +67,38 @@ def parse_xml(filepath):
     print("Parsing all done.......")
     return english_texts, babelnetIDs, lemma_lists, anchor_lists
 
+def parse_trainomatic_xml(filepath):
+    """
+    :filepath - takes an xml filepath of our corpus
+    :returns four multidimensional arrays of anchors,
+    lemmas, sentences, & babelnetID found in the file.
+    """
+
+    xml_content = ET.iterparse(filepath, events=('end',), tag='lexelt')
+    print("Parsing xml file.......")
+
+    for event, element in xml_content:
+        texts, lemmas, netIDs = [], [], []
+        try:
+            for elem in element.iter():
+                if elem.tag == 'instance':
+                    for ele in elem.iter():
+                        if ele.tag == 'answer':
+                            lemmas.append(ele.attrib['instance'].split('.')[0])
+                            netIDs.append(ele.attrib['senseId'].split('.')[0])
+                        if ele.tag == 'context':
+                            texts.append(ele.text)
+        except EmptyTagError:
+            continue
+
+    print("Parsing all done.......")
+
+    length = len(lemmas)
+    if all(len(lst) == length for lst in [netIDs, texts]):
+        return texts, netIDs, lemmas
+    else:
+        print("Parse error")
+
 def get_wanted_IDs(babelnetIDs):
     """
     :babelnetIDs - A list of all babelnetIDs from our Corpus
@@ -71,12 +108,12 @@ def get_wanted_IDs(babelnetIDs):
     set_flat_list = list(set(flat_list))
     mapping_IDS =[]
 
-    with open('resources/bn2wn_mapping.txt', 'r') as f:
+    with open(MAPPING, 'r') as f:
         lines = f.readlines()
         mapping_IDS = [line.split('\t')[0] for line in lines]
     return mapping_IDS
 
-def join_lemma_to_IDs(lemmas, babelnetIDs):
+def join_eurosense_lemmas(lemmas, babelnetIDs):
     """
     :lemmas - arrays of lemmas e.g [ 'area', 'president']
     :babelnetIDs arrays of correspondent babelnetIDs to the lemmas
@@ -158,6 +195,7 @@ def replaceMultiple(main, replaces, new):
             main = main.replace(elem, new)
     return main
 
+
 def remove_stop_words(data):
     print("Removing stop words using nltk toolkit")
     all_clean = []
@@ -167,17 +205,83 @@ def remove_stop_words(data):
         all_clean.append(clean)
     return all_clean
 
+
 def write_data_to_file(data):
-    with open(DATA_FOLDER+ '/training.txt', 'w') as f:
+    with open(DATA_FOLDER+ '/trainomatic_data.txt', 'w') as f:
         f.write('sentence'+'\n')
         for item in data:
             f.write("%s\n" % item)
 
-def main():
+
+def mapping_to_dict(filepath):
+    dict_ = {}
+    with open(filepath, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            new_line = line.split('\t')
+            dict_[new_line[-1].replace('\n','')] = new_line[0]
+        return dict_
+
+
+def join_trainomatic_lemma(filename):
+    english_texts, all_netIDs, all_lemmas = parse_trainomatic_xml(filename)
+    dict_map = mapping_to_dict(MAPPING)
+    reformed_IDs = [i.split(':')[-1] for i in all_netIDs]
+    for index, item in enumerate(reformed_IDs):
+        if item in dict_map:
+            reformed_IDs[index] = dict_map[item]
+        else:
+            reformed_IDs[index] = 'OVT'
+
+    lemma_IDs = []
+    for x in range(0, len(all_lemmas)):
+        lemma_IDs = [m.lower() + '_' + str(n) for m, n in zip(all_lemmas, reformed_IDs)]
+    lemma_IDs = [[x] for x in lemma_IDs]
+    all_lemmas = [[x] for x in all_lemmas]
+
+    length = len(english_texts)
+    if all(len(lst) == length for lst in [lemma_IDs, all_lemmas]):
+        return english_texts, lemma_IDs, all_lemmas
+    else:
+        print("Length do not match")
+
+
+texts = []
+def write_file(name):
+    english_texts, lemma_ids, anchors = join_trainomatic_lemma(name)
+    texts_en_copy = english_texts
+    for j in range(len(anchors)):
+        for a,b in zip(anchors[j], lemma_ids[j]):
+            if a in texts_en_copy[j]:
+                texts_en_copy[j] = re.sub(r'\b'+ re.escape(a)+r'\b', b, texts_en_copy[j])
+        texts.append(texts_en_copy[j])
+    return texts
+
+
+def folders(path):
+    all_texts = []
+    for directory, subdirectories, files in os.walk(path):
+        for file in files:
+            filename = os.path.join(directory, file)
+            text = write_file(filename)
+        all_texts.append(text)
+    return all_texts
+
+
+def trainomatic_nmain():
+    training_data = folders(TRAINOMATIC_FOLDERPATH)
+    if parse_args().nltk == 'true':
+        all_clean = remove_stop_words(training_data[0])
+        write_data_to_file(all_clean)
+    else:
+        write_data_to_file(training_data[0])
+
+
+def eurosense_main():
     cst_punct = list(string.punctuation.replace(':', '').replace('_', ''))
 
-    all_english_texts, all_babelnetIDs, all_lemmas, all_anchors = parse_xml('data/test.xml')
-    all_lemmaIDs = join_lemma_to_IDs(all_lemmas,all_babelnetIDs)
+    all_english_texts, all_babelnetIDs, all_lemmas, all_anchors = parse_eurosense_xml(EUROSENSE_XML_FILEPATH)
+    all_lemmaIDs = join_eurosense_lemmas(all_lemmas,all_babelnetIDs)
 
     length = len(all_english_texts)
     assert all(len(lst) == length for lst in [all_babelnetIDs, all_lemmas, all_anchors])
@@ -192,6 +296,12 @@ def main():
         write_data_to_file(all_clean)
     else:
         write_data_to_file(training_data)
+
+def main():
+    if parse_args().data == 'eurosense':
+        eurosense_main()
+    else:
+        trainomatic_nmain()
 
 
 if __name__ == '__main__':

@@ -17,6 +17,7 @@ def setup_dataframe(embeddings_path, gold_data_path):
     print("Setting up data frame......")
     df['word_a'] = df.word_a.str.lower()
     df['word_b'] = df.word_b.str.lower()
+    import ipdb; ipdb.set_trace()
 
     embeddings_list = []
     for key, value  in model.wv.vocab.items():
@@ -52,7 +53,7 @@ def cosine_sim_for_unfound(row):
 def spearman(dataframe):
     print("Computing cosine similarities for all pairs")
     dataframe['cosine_sim'] = dataframe.apply(lambda x: cosine_sim_for_unfound(x), axis=1)
-    # dataframe = dataframe[dataframe['cosine_sim'] != -1]
+    dataframe = dataframe[dataframe['cosine_sim'] != -1]
 
     assert len(dataframe.gold_score) == len(dataframe.cosine_sim)
     print("Computing spearmans rank correlation for all gold scores and embeddings cosine scores")
