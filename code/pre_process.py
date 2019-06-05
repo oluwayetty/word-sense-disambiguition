@@ -70,8 +70,8 @@ def parse_eurosense_xml(filepath):
 def parse_trainomatic_xml(filepath):
     """
     :filepath - takes an xml filepath of our corpus
-    :returns four multidimensional arrays of anchors,
-    lemmas, sentences, & babelnetID found in the file.
+    :returns three multidimensional arrays of
+    lemmas, sentences, & wordnetID found in the file.
     """
 
     xml_content = ET.iterparse(filepath, events=('end',), tag='lexelt')
@@ -207,13 +207,17 @@ def remove_stop_words(data):
 
 
 def write_data_to_file(data):
-    with open(DATA_FOLDER+ '/trainomatic_data.txt', 'w') as f:
+    with open(DATA_FOLDER+ '/trainomatic_data_nltk.txt', 'w') as f:
         f.write('sentence'+'\n')
         for item in data:
             f.write("%s\n" % item)
 
 
 def mapping_to_dict(filepath):
+    """
+    takes a filepath that contains wordnetID mapping to babelnetID
+    returns a dictionary of the mapping
+    """
     dict_ = {}
     with open(filepath, 'r') as file:
         lines = file.readlines()
@@ -224,6 +228,10 @@ def mapping_to_dict(filepath):
 
 
 def join_trainomatic_lemma(filename):
+    """
+    uses the parse_trainomatic_xml() function to process
+    xml files from trainomatic
+    """
     english_texts, all_netIDs, all_lemmas = parse_trainomatic_xml(filename)
     dict_map = mapping_to_dict(MAPPING)
     reformed_IDs = [i.split(':')[-1] for i in all_netIDs]
