@@ -1,7 +1,8 @@
 /data
 .DS_Store
 /notebooks
-resources/embeddings_sample.vec
 resources/.DS_Store
 word2vec-visualization
 code/__pycache__
+resources/bn2wn_mapping.txt
+resources/combined.tab

@@ -39,6 +39,7 @@ def setup_dataframe(embeddings_path, gold_data_path):
 def cosine_sim_for_pairs(word_a, word_b):
     cosine_values = []
     for i in itertools.product(word_a, word_b):
+        import ipdb; ipdb.set_trace()
         cos = 1 - cosine(i[0], i[1])
         cosine_values.append(cos)
     return max(cosine_values)
@@ -52,8 +53,8 @@ def cosine_sim_for_unfound(row):
 def spearman(dataframe):
     print("Computing cosine similarities for all pairs")
     dataframe['cosine_sim'] = dataframe.apply(lambda x: cosine_sim_for_unfound(x), axis=1)
-    # dataframe = dataframe[dataframe['cosine_sim'] != -1]
 
+    # dataframe = dataframe[dataframe['cosine_sim'] != -1] ==> to check pairs of words found
 
     assert len(dataframe.gold_score) == len(dataframe.cosine_sim)
     print("Computing spearmans rank correlation for all gold scores and embeddings cosine scores")
@@ -62,7 +63,7 @@ def spearman(dataframe):
     return spearmans_rank_correlation
 
 def main():
-    df = setup_dataframe(EMBEDDINGS,COMBINED_TAB)
+    df = setup_dataframe(EMBEDDINGS, COMBINED_TAB)
     spearman_score = spearman(df)
     print("The Spearman correlation is:",spearman_score)
 

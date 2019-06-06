@@ -4,7 +4,6 @@ from pre_process import remove_context_words
 from gensim.models import Word2Vec
 from argparse import ArgumentParser
 
-
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument("--format", default="false",
@@ -14,21 +13,21 @@ def parse_args():
 
 def train_cbow_model(training_data):
     print("Training started.....")
-    model = Word2Vec(sentences = training_data, min_count=1, ns_exponent=10e-3, window=8, sg=0, hs=1, size=500,iter=50)
+    model = Word2Vec(sentences = training_data, ns_exponent=10e-3, window=5, sg=0, hs=1, size=100,iter=20)
     model.wv.save_word2vec_format(EMBEDDINGS)
     print("Training done")
 
 
-def train_cbow_model_line_sentence(training_data):
+def train_cbow_model_gz_data(training_data):
     print("Training started.....")
-    model = Word2Vec(corpus_file = training_data, min_count=1, ns_exponent=10e-3, window=8, sg=0, hs=1,size=550,iter=10)
+    model = Word2Vec(corpus_file = training_data, ns_exponent=10e-3, window=5, sg=0, hs=1,size=100,iter=20)
     model.wv.save_word2vec_format(EMBEDDINGS)
     print("Training done")
 
 def main():
     if parse_args().format == 'true':
         training_data = return_gz_format(DATA_FILE)
-        train_cbow_model_line_sentence(training_data)
+        train_cbow_model_gz_data(training_data)
         print("Creating embeddings")
         remove_context_words(EMBEDDINGS)
     else:
