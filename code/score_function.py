@@ -29,7 +29,6 @@ def setup_dataframe(embeddings_path, gold_data_path):
 
     df['a_vec'] = df.word_a.map(lambda x: pair_words(x, lemmas,babel_id, embeddings_dict))
     df['b_vec'] = df.word_b.map(lambda x: pair_words(x, lemmas,babel_id,embeddings_dict))
-    # import ipdb; ipdb.set_trace()
 
     df['a_vec'] = df['a_vec'].apply(padding)
     df['b_vec'] = df['b_vec'].apply(padding)
