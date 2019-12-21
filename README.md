@@ -1,5 +1,8 @@
 ![Model Architecture](https://github.com/oluwayetty/word-sense-disambiguition/blob/master/cbow.jpg)
 
+## Result Evaluation
+![](https://github.com/oluwayetty/word-sense-disambiguition/blob/master/results.jpg)
+
 ## Problem 
 One of the limitation of word embeddings is the meaning conflation deficiency, which arises from representing a word with all its possible meanings as a single vector. This project is one step to address this; representation of meanings. Given a corpus, we will train a Word2Vec model to obtain its lemma_synsetID given a context of words.
 
